@@ -1,59 +1,28 @@
 
-import { useState, useEffect } from "react";
-import { Calendar, Users, Clock, Search, Plus, Edit, Trash2, ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { Calendar, Users, Clock, Search, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { AdminLogin } from "@/components/admin/AdminLogin";
 import { AppointmentList } from "@/components/admin/AppointmentList";
 import { AppointmentStats } from "@/components/admin/AppointmentStats";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppointments } from "@/hooks/useAppointments";
 
 const Admin = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("");
   const { toast } = useToast();
-
-  // Datos simulados de citas (vendría de la API)
-  const [appointments, setAppointments] = useState([
-    {
-      id: 1,
-      patientName: "María García",
-      email: "maria@email.com",
-      phone: "+57 300 123 4567",
-      date: "2024-06-15",
-      time: "09:00",
-      reason: "Consulta general",
-      status: "confirmed"
-    },
-    {
-      id: 2,
-      patientName: "Juan Pérez",
-      email: "juan@email.com",
-      phone: "+57 300 765 4321",
-      date: "2024-06-15",
-      time: "10:30",
-      reason: "Control rutinario",
-      status: "confirmed"
-    },
-    {
-      id: 3,
-      patientName: "Ana López",
-      email: "ana@email.com",
-      phone: "+57 300 555 1234",
-      date: "2024-06-16",
-      time: "14:00",
-      reason: "Dolor de cabeza",
-      status: "pending"
-    }
-  ]);
+  
+  const { isAuthenticated, login, logout } = useAuth();
+  const { appointments, updateAppointment, deleteAppointment } = useAppointments();
 
   const handleLogin = (credentials: { username: string; password: string }) => {
-    // Aquí se validaría con la API .NET
-    if (credentials.username === "admin" && credentials.password === "admin123") {
-      setIsAuthenticated(true);
+    const success = login(credentials);
+    
+    if (success) {
       toast({
         title: "Acceso concedido",
         description: "Bienvenido al portal administrativo",
@@ -68,21 +37,37 @@ const Admin = () => {
   };
 
   const handleDeleteAppointment = (appointmentId: number) => {
-    setAppointments(prev => prev.filter(apt => apt.id !== appointmentId));
-    toast({
-      title: "Cita eliminada",
-      description: "La cita ha sido eliminada exitosamente",
-    });
+    const success = deleteAppointment(appointmentId);
+    
+    if (success) {
+      toast({
+        title: "Cita eliminada",
+        description: "La cita ha sido eliminada exitosamente",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la cita",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditAppointment = (appointmentId: number, updatedData: any) => {
-    setAppointments(prev => prev.map(apt => 
-      apt.id === appointmentId ? { ...apt, ...updatedData } : apt
-    ));
-    toast({
-      title: "Cita actualizada",
-      description: "Los cambios han sido guardados",
-    });
+    const success = updateAppointment(appointmentId, updatedData);
+    
+    if (success) {
+      toast({
+        title: "Cita actualizada",
+        description: "Los cambios han sido guardados",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la cita",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!isAuthenticated) {
@@ -114,10 +99,7 @@ const Admin = () => {
                 <h1 className="text-2xl font-bold text-gray-900">Portal Administrativo</h1>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsAuthenticated(false)}
-            >
+            <Button variant="outline" onClick={logout}>
               Cerrar Sesión
             </Button>
           </div>

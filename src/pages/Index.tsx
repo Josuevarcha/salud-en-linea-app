@@ -3,17 +3,16 @@ import { useState } from "react";
 import { Calendar, Clock, User, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { AppointmentCalendar } from "@/components/appointments/AppointmentCalendar";
 import { AppointmentForm } from "@/components/appointments/AppointmentForm";
+import { useAppointments, AppointmentFormData } from "@/hooks/useAppointments";
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();
-  const [selectedTime, setSelectedTime] = useState<string>("");
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
+  const { addAppointment, getAppointmentsByDate, isTimeSlotAvailable } = useAppointments();
 
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -22,16 +21,35 @@ const Index = () => {
     }
   };
 
-  const handleAppointmentSubmit = (appointmentData: any) => {
-    // Aquí se conectaría con la API .NET
-    console.log("Cita agendada:", appointmentData);
-    toast({
-      title: "Cita agendada exitosamente",
-      description: "Recibirás un correo de confirmación pronto.",
-    });
-    setShowForm(false);
-    setSelectedDate(undefined);
-    setSelectedTime("");
+  const handleAppointmentSubmit = (appointmentData: AppointmentFormData) => {
+    // Verificar disponibilidad del horario
+    const dateString = appointmentData.date.toISOString().split('T')[0];
+    if (!isTimeSlotAvailable(dateString, appointmentData.selectedTime)) {
+      toast({
+        title: "Horario no disponible",
+        description: "El horario seleccionado ya está ocupado. Por favor elige otro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Intentar crear la cita
+    const success = addAppointment(appointmentData);
+    
+    if (success) {
+      toast({
+        title: "Cita agendada exitosamente",
+        description: "Tu cita ha sido registrada. Recibirás confirmación pronto.",
+      });
+      setShowForm(false);
+      setSelectedDate(undefined);
+    } else {
+      toast({
+        title: "Error al agendar cita",
+        description: "Hubo un problema al registrar tu cita. Inténtalo nuevamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -80,6 +98,7 @@ const Index = () => {
               <AppointmentCalendar
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
+                getAppointmentsByDate={getAppointmentsByDate}
               />
             </CardContent>
           </Card>
@@ -96,9 +115,9 @@ const Index = () => {
               {showForm && selectedDate ? (
                 <AppointmentForm
                   selectedDate={selectedDate}
-                  selectedTime={selectedTime}
                   onSubmit={handleAppointmentSubmit}
                   onCancel={() => setShowForm(false)}
+                  isTimeSlotAvailable={isTimeSlotAvailable}
                 />
               ) : (
                 <div className="text-center py-8 text-gray-500">

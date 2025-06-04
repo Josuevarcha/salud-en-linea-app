@@ -5,15 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Clock, User, Mail, Phone } from "lucide-react";
+import { AppointmentFormData } from "@/hooks/useAppointments";
 
 interface AppointmentFormProps {
   selectedDate: Date;
-  selectedTime: string;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: AppointmentFormData) => void;
   onCancel: () => void;
+  isTimeSlotAvailable: (date: string, time: string) => boolean;
 }
 
-export const AppointmentForm = ({ selectedDate, onSubmit, onCancel }: AppointmentFormProps) => {
+export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAvailable }: AppointmentFormProps) => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,11 +24,13 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel }: Appointmen
     selectedTime: ""
   });
 
-  // Horarios disponibles (esto vendría de la API)
-  const availableTimes = [
+  // Horarios disponibles
+  const timeSlots = [
     "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
     "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"
   ];
+
+  const dateString = selectedDate.toISOString().split('T')[0];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,13 +39,9 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel }: Appointmen
       return;
     }
     
-    const appointmentData = {
+    const appointmentData: AppointmentFormData = {
       ...formData,
-      date: selectedDate,
-      datetime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 
-        parseInt(formData.selectedTime.split(':')[0]), 
-        parseInt(formData.selectedTime.split(':')[1])
-      )
+      date: selectedDate
     };
     
     onSubmit(appointmentData);
@@ -77,17 +76,22 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel }: Appointmen
           <span>Selecciona un horario</span>
         </Label>
         <div className="grid grid-cols-3 gap-2">
-          {availableTimes.map((time) => (
-            <Button
-              key={time}
-              type="button"
-              variant={formData.selectedTime === time ? "default" : "outline"}
-              className="text-sm"
-              onClick={() => handleInputChange("selectedTime", time)}
-            >
-              {time}
-            </Button>
-          ))}
+          {timeSlots.map((time) => {
+            const isAvailable = isTimeSlotAvailable(dateString, time);
+            return (
+              <Button
+                key={time}
+                type="button"
+                variant={formData.selectedTime === time ? "default" : "outline"}
+                className={`text-sm ${!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => isAvailable && handleInputChange("selectedTime", time)}
+                disabled={!isAvailable}
+              >
+                {time}
+                {!isAvailable && <span className="ml-1 text-xs">(Ocupado)</span>}
+              </Button>
+            );
+          })}
         </div>
       </div>
 
@@ -163,7 +167,7 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel }: Appointmen
         </div>
 
         <div className="flex space-x-3 pt-4">
-          <Button type="submit" className="flex-1">
+          <Button type="submit" className="flex-1" disabled={!formData.selectedTime}>
             Confirmar Cita
           </Button>
           <Button type="button" variant="outline" onClick={onCancel}>

@@ -1,28 +1,19 @@
 
-import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
 
 interface AppointmentCalendarProps {
   selectedDate?: Date;
   onDateSelect: (date: Date | undefined) => void;
+  getAppointmentsByDate: (date: string) => any[];
 }
 
-export const AppointmentCalendar = ({ selectedDate, onDateSelect }: AppointmentCalendarProps) => {
-  // Simular horarios ocupados (esto vendría de la API)
-  const busyDates = [
-    new Date(2024, 5, 10),
-    new Date(2024, 5, 15),
-    new Date(2024, 5, 20),
-  ];
-
+export const AppointmentCalendar = ({ selectedDate, onDateSelect, getAppointmentsByDate }: AppointmentCalendarProps) => {
+  
   const isDateBusy = (date: Date) => {
-    return busyDates.some(busyDate => 
-      date.getDate() === busyDate.getDate() &&
-      date.getMonth() === busyDate.getMonth() &&
-      date.getFullYear() === busyDate.getFullYear()
-    );
+    const dateString = date.toISOString().split('T')[0];
+    const dayAppointments = getAppointmentsByDate(dateString);
+    return dayAppointments.some(apt => apt.status !== 'cancelled');
   };
 
   const isDateDisabled = (date: Date) => {
@@ -31,6 +22,25 @@ export const AppointmentCalendar = ({ selectedDate, onDateSelect }: AppointmentC
     
     // Deshabilitar fechas pasadas y domingos
     return date < today || date.getDay() === 0;
+  };
+
+  // Obtener fechas ocupadas para el modificador
+  const getBusyDates = () => {
+    const today = new Date();
+    const futureDate = new Date();
+    futureDate.setMonth(today.getMonth() + 3); // Próximos 3 meses
+    
+    const busyDates = [];
+    const currentDate = new Date(today);
+    
+    while (currentDate <= futureDate) {
+      if (isDateBusy(currentDate)) {
+        busyDates.push(new Date(currentDate));
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return busyDates;
   };
 
   return (
@@ -42,7 +52,7 @@ export const AppointmentCalendar = ({ selectedDate, onDateSelect }: AppointmentC
         disabled={isDateDisabled}
         className="rounded-md border shadow-sm"
         modifiers={{
-          busy: busyDates
+          busy: getBusyDates()
         }}
         modifiersStyles={{
           busy: { backgroundColor: "#fef2f2", color: "#dc2626" }
