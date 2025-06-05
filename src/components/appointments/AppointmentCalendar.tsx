@@ -20,7 +20,7 @@ export const AppointmentCalendar = ({ selectedDate, onDateSelect, getAppointment
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Deshabilitar fechas pasadas y domingos
+    // Deshabilitar fechas pasadas y domingos (día 0)
     return date < today || date.getDay() === 0;
   };
 
@@ -34,7 +34,7 @@ export const AppointmentCalendar = ({ selectedDate, onDateSelect, getAppointment
     const currentDate = new Date(today);
     
     while (currentDate <= futureDate) {
-      if (isDateBusy(currentDate)) {
+      if (isDateBusy(currentDate) && currentDate.getDay() !== 0) { // Excluir domingos de fechas ocupadas
         busyDates.push(new Date(currentDate));
       }
       currentDate.setDate(currentDate.getDate() + 1);
@@ -70,7 +70,7 @@ export const AppointmentCalendar = ({ selectedDate, onDateSelect, getAppointment
         </div>
         <div className="flex items-center space-x-1">
           <div className="w-3 h-3 bg-gray-300 rounded"></div>
-          <span>No disponible</span>
+          <span>No disponible (domingos bloqueados)</span>
         </div>
       </div>
 

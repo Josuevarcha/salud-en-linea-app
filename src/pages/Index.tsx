@@ -1,20 +1,35 @@
 
 import { useState } from "react";
-import { Calendar, Clock, User, Phone, Mail } from "lucide-react";
+import { Calendar, Clock, User, Phone, Mail, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { AppointmentCalendar } from "@/components/appointments/AppointmentCalendar";
 import { AppointmentForm } from "@/components/appointments/AppointmentForm";
+import { CustomerLogin } from "@/components/customer/CustomerLogin";
+import { CustomerRegistration } from "@/components/customer/CustomerRegistration";
 import { useAppointments, AppointmentFormData } from "@/hooks/useAppointments";
+import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [showForm, setShowForm] = useState(false);
+  const [showRegistration, setShowRegistration] = useState(false);
   const { toast } = useToast();
+  
   const { addAppointment, getAppointmentsByDate, isTimeSlotAvailable } = useAppointments();
+  const { isAuthenticated, customer, logout } = useCustomerAuth();
 
   const handleDateSelect = (date: Date | undefined) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Inicia sesión requerido",
+        description: "Debes iniciar sesión para agendar una cita",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setSelectedDate(date);
     if (date) {
       setShowForm(true);
@@ -22,6 +37,8 @@ const Index = () => {
   };
 
   const handleAppointmentSubmit = (appointmentData: AppointmentFormData) => {
+    if (!customer) return;
+
     // Verificar disponibilidad del horario
     const dateString = appointmentData.date.toISOString().split('T')[0];
     if (!isTimeSlotAvailable(dateString, appointmentData.selectedTime)) {
@@ -33,8 +50,19 @@ const Index = () => {
       return;
     }
 
+    // Usar los datos del cliente autenticado
+    const appointmentWithCustomerData: AppointmentFormData = {
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      email: customer.email,
+      phone: customer.phone,
+      reason: appointmentData.reason,
+      selectedTime: appointmentData.selectedTime,
+      date: appointmentData.date
+    };
+
     // Intentar crear la cita
-    const success = addAppointment(appointmentData);
+    const success = addAppointment(appointmentWithCustomerData);
     
     if (success) {
       toast({
@@ -52,6 +80,14 @@ const Index = () => {
     }
   };
 
+  const handleRegistrationSuccess = () => {
+    setShowRegistration(false);
+    toast({
+      title: "¡Registro exitoso!",
+      description: "Ahora puedes iniciar sesión con tu cuenta",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* Header */}
@@ -64,9 +100,22 @@ const Index = () => {
               </div>
               <h1 className="text-2xl font-bold text-gray-900">Salud en Línea</h1>
             </div>
-            <Button variant="outline" onClick={() => window.location.href = "/admin"}>
-              Portal Administrativo
-            </Button>
+            <div className="flex items-center space-x-4">
+              {isAuthenticated && customer && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">
+                    Bienvenido, {customer.firstName}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={logout}>
+                    <LogOut className="h-4 w-4 mr-1" />
+                    Salir
+                  </Button>
+                </div>
+              )}
+              <Button variant="outline" onClick={() => window.location.href = "/admin"}>
+                Portal Administrativo
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -78,56 +127,72 @@ const Index = () => {
             Agenda tu Cita Médica en Línea
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Reserva tu cita de forma rápida y sencilla, sin necesidad de registro previo
+            {isAuthenticated 
+              ? `Bienvenido ${customer?.firstName}, selecciona una fecha para agendar tu cita`
+              : "Inicia sesión o regístrate para comenzar a agendar tus citas médicas"
+            }
           </p>
         </div>
       </section>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Calendar Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5" />
-                <span>Selecciona una Fecha</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AppointmentCalendar
-                selectedDate={selectedDate}
-                onDateSelect={handleDateSelect}
-                getAppointmentsByDate={getAppointmentsByDate}
+        {!isAuthenticated ? (
+          <div className="flex justify-center">
+            {showRegistration ? (
+              <CustomerRegistration
+                onSuccess={handleRegistrationSuccess}
+                onCancel={() => setShowRegistration(false)}
               />
-            </CardContent>
-          </Card>
-
-          {/* Appointment Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span>Información de la Cita</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {showForm && selectedDate ? (
-                <AppointmentForm
+            ) : (
+              <CustomerLogin onRegisterClick={() => setShowRegistration(true)} />
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Calendar Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Calendar className="h-5 w-5" />
+                  <span>Selecciona una Fecha</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AppointmentCalendar
                   selectedDate={selectedDate}
-                  onSubmit={handleAppointmentSubmit}
-                  onCancel={() => setShowForm(false)}
-                  isTimeSlotAvailable={isTimeSlotAvailable}
+                  onDateSelect={handleDateSelect}
+                  getAppointmentsByDate={getAppointmentsByDate}
                 />
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Selecciona una fecha en el calendario para agendar tu cita</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+
+            {/* Appointment Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <User className="h-5 w-5" />
+                  <span>Información de la Cita</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {showForm && selectedDate ? (
+                  <AppointmentForm
+                    selectedDate={selectedDate}
+                    onSubmit={handleAppointmentSubmit}
+                    onCancel={() => setShowForm(false)}
+                    isTimeSlotAvailable={isTimeSlotAvailable}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Selecciona una fecha en el calendario para agendar tu cita</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Features Section */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
