@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Calendar, Clock, User, Phone, Mail, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -82,10 +81,7 @@ const Index = () => {
 
   const handleRegistrationSuccess = () => {
     setShowRegistration(false);
-    toast({
-      title: "¡Registro exitoso!",
-      description: "Ahora puedes iniciar sesión con tu cuenta",
-    });
+    // No necesitamos mostrar toast aquí porque ya se muestra en el componente de registro
   };
 
   return (

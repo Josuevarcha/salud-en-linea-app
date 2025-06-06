@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Mail, Phone, Lock, CreditCard } from "lucide-react";
 import { useCustomers, CustomerRegistrationData } from "@/hooks/useCustomers";
+import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 import { useToast } from "@/hooks/use-toast";
 
 interface CustomerRegistrationProps {
@@ -25,6 +26,7 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const { registerCustomer } = useCustomers();
+  const { login } = useCustomerAuth();
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,9 +53,24 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
     const result = registerCustomer(formData);
     
     if (result.success) {
+      // Crear objeto cliente para autenticación
+      const newCustomer = {
+        id: Date.now(),
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        cedula: formData.cedula,
+        phone: formData.phone,
+        password: formData.password,
+        createdAt: new Date().toISOString()
+      };
+
+      // Iniciar sesión automáticamente después del registro
+      login(newCustomer);
+      
       toast({
         title: "¡Registro exitoso!",
-        description: result.message,
+        description: "Tu cuenta ha sido creada y has iniciado sesión automáticamente",
       });
       onSuccess();
     } else {
