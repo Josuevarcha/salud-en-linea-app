@@ -22,30 +22,9 @@ export interface CustomerRegistrationData {
 }
 
 const CUSTOMERS_STORAGE_KEY = 'medical_app_customers';
-const CUSTOMERS_JSON_PATH = '/data/customers.json';
 
 export const useCustomers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
-
-  // Función para cargar datos del archivo JSON
-  const loadCustomersFromJSON = async () => {
-    try {
-      const response = await fetch(CUSTOMERS_JSON_PATH);
-      if (response.ok) {
-        const jsonData = await response.json();
-        console.log('Datos cargados desde JSON:', jsonData);
-        setCustomers(jsonData);
-        // También guardamos en localStorage como respaldo
-        localStorage.setItem(CUSTOMERS_STORAGE_KEY, JSON.stringify(jsonData));
-      } else {
-        console.log('No se pudo cargar el archivo JSON, usando localStorage');
-        loadFromLocalStorage();
-      }
-    } catch (error) {
-      console.error('Error al cargar desde JSON:', error);
-      loadFromLocalStorage();
-    }
-  };
 
   // Función para cargar desde localStorage
   const loadFromLocalStorage = () => {
@@ -53,42 +32,27 @@ export const useCustomers = () => {
     if (storedCustomers) {
       try {
         const parsed = JSON.parse(storedCustomers);
+        console.log('Clientes cargados desde localStorage:', parsed);
         setCustomers(parsed);
+        return parsed;
       } catch (error) {
         console.error('Error al cargar clientes:', error);
         setCustomers([]);
+        return [];
       }
     }
+    return [];
   };
 
-  // Función para guardar en archivo JSON (simulado)
-  const saveCustomersToJSON = (customersData: Customer[]) => {
-    // Como no podemos escribir directamente al archivo desde el navegador,
-    // creamos un blob y lo descargamos
-    const dataStr = JSON.stringify(customersData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    
-    // También guardamos en localStorage
+  // Función para guardar en localStorage
+  const saveToLocalStorage = (customersData: Customer[]) => {
     localStorage.setItem(CUSTOMERS_STORAGE_KEY, JSON.stringify(customersData));
-    
-    // Crear enlace de descarga automática
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'customers.json';
-    
-    // Auto-descargar el archivo actualizado
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    console.log('Datos guardados:', customersData);
+    console.log('Datos guardados en localStorage:', customersData);
   };
 
   // Cargar datos al inicializar
   useEffect(() => {
-    loadCustomersFromJSON();
+    loadFromLocalStorage();
   }, []);
 
   const registerCustomer = (customerData: CustomerRegistrationData): { success: boolean; message: string } => {
@@ -118,8 +82,8 @@ export const useCustomers = () => {
       const updatedCustomers = [...customers, newCustomer];
       setCustomers(updatedCustomers);
       
-      // Guardar en JSON y localStorage
-      saveCustomersToJSON(updatedCustomers);
+      // Guardar en localStorage
+      saveToLocalStorage(updatedCustomers);
       
       return { success: true, message: 'Cliente registrado exitosamente' };
     } catch (error) {
@@ -132,6 +96,7 @@ export const useCustomers = () => {
     console.log('Intentando autenticar:', email);
     console.log('Clientes disponibles:', customers);
     const customer = customers.find(c => c.email === email && c.password === password);
+    console.log('Cliente encontrado:', customer ? 'Sí' : 'No');
     return customer || null;
   };
 
@@ -139,11 +104,15 @@ export const useCustomers = () => {
     return customers.find(c => c.email === email) || null;
   };
 
+  const reloadCustomers = () => {
+    loadFromLocalStorage();
+  };
+
   return {
     customers,
     registerCustomer,
     authenticateCustomer,
     getCustomerByEmail,
-    loadCustomersFromJSON // Función para recargar datos manualmente
+    reloadCustomers
   };
 };
