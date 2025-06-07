@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Clock, User, MessageSquare } from "lucide-react";
 import { AppointmentFormData } from "@/hooks/useAppointments";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 
 interface AppointmentFormProps {
   selectedDate: Date;

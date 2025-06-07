@@ -1,5 +1,5 @@
 
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 
 export const HeroSection = () => {
   const { isAuthenticated, customer } = useCustomerAuth();
