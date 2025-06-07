@@ -7,7 +7,9 @@ import { AppointmentSection } from "@/components/appointments/AppointmentSection
 import { AuthSection } from "@/components/auth/AuthSection";
 
 const Index = () => {
-  const { isAuthenticated } = useCustomerAuth();
+  const { isAuthenticated, customer } = useCustomerAuth();
+
+  console.log('Index - Estado de autenticación:', { isAuthenticated, customer });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
@@ -20,13 +22,16 @@ const Index = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         {!isAuthenticated ? (
-          <AuthSection />
+          <>
+            <AuthSection />
+            <FeaturesSection />
+          </>
         ) : (
-          <AppointmentSection />
+          <>
+            <AppointmentSection />
+            <FeaturesSection />
+          </>
         )}
-
-        {/* Features Section */}
-        <FeaturesSection />
       </div>
     </div>
   );

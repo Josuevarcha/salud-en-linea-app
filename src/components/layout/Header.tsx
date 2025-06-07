@@ -6,6 +6,8 @@ import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 export const Header = () => {
   const { isAuthenticated, customer, logout } = useCustomerAuth();
 
+  console.log('Header - Estado de autenticación:', { isAuthenticated, customer });
+
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -17,7 +19,7 @@ export const Header = () => {
             <h1 className="text-2xl font-bold text-gray-900">Salud en Línea</h1>
           </div>
           <div className="flex items-center space-x-4">
-            {isAuthenticated && customer && (
+            {isAuthenticated && customer ? (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">
                   Bienvenido, {customer.firstName}
@@ -27,6 +29,8 @@ export const Header = () => {
                   Salir
                 </Button>
               </div>
+            ) : (
+              <span className="text-sm text-gray-500">No autenticado</span>
             )}
             <Button variant="outline" onClick={() => window.location.href = "/admin"}>
               Portal Administrativo
