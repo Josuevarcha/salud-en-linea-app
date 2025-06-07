@@ -18,28 +18,45 @@ export const CustomerLogin = ({ onRegisterClick }: CustomerLoginProps) => {
     email: "",
     password: ""
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const { authenticateCustomer } = useCustomers();
-  const { login } = useCustomerAuth();
+  const { login, isAuthenticated } = useCustomerAuth();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Si ya está autenticado, no mostrar el formulario
+  if (isAuthenticated) {
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    const customer = authenticateCustomer(credentials.email, credentials.password);
-    
-    if (customer) {
-      login(customer);
+    try {
+      const customer = authenticateCustomer(credentials.email, credentials.password);
+      
+      if (customer) {
+        login(customer);
+        toast({
+          title: "¡Bienvenido!",
+          description: `Hola ${customer.firstName}, ya puedes agendar tus citas`,
+        });
+      } else {
+        toast({
+          title: "Error de autenticación",
+          description: "Email o contraseña incorrectos",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "¡Bienvenido!",
-        description: `Hola ${customer.firstName}, ya puedes agendar tus citas`,
-      });
-    } else {
-      toast({
-        title: "Error de autenticación",
-        description: "Email o contraseña incorrectos",
+        title: "Error",
+        description: "Ocurrió un error al intentar iniciar sesión",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -66,6 +83,7 @@ export const CustomerLogin = ({ onRegisterClick }: CustomerLoginProps) => {
                 email: e.target.value
               }))}
               placeholder="tu@email.com"
+              disabled={isLoading}
             />
           </div>
 
@@ -84,11 +102,12 @@ export const CustomerLogin = ({ onRegisterClick }: CustomerLoginProps) => {
                 password: e.target.value
               }))}
               placeholder="Tu contraseña"
+              disabled={isLoading}
             />
           </div>
 
-          <Button type="submit" className="w-full">
-            Iniciar Sesión
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
         </form>
 
@@ -98,6 +117,7 @@ export const CustomerLogin = ({ onRegisterClick }: CustomerLoginProps) => {
             variant="outline" 
             onClick={onRegisterClick}
             className="w-full"
+            disabled={isLoading}
           >
             <UserPlus className="h-4 w-4 mr-2" />
             Registrarse

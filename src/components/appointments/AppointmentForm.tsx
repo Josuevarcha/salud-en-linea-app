@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Clock, User, Mail, Phone } from "lucide-react";
+import { Clock, User, MessageSquare } from "lucide-react";
 import { AppointmentFormData } from "@/hooks/useAppointments";
+import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 
 interface AppointmentFormProps {
   selectedDate: Date;
@@ -15,11 +16,8 @@ interface AppointmentFormProps {
 }
 
 export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAvailable }: AppointmentFormProps) => {
+  const { customer } = useCustomerAuth();
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
     reason: "",
     selectedTime: ""
   });
@@ -39,8 +37,18 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAv
       return;
     }
     
+    if (!customer) {
+      alert("Error: No se encontraron datos del usuario");
+      return;
+    }
+    
     const appointmentData: AppointmentFormData = {
-      ...formData,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      email: customer.email,
+      phone: customer.phone,
+      reason: formData.reason,
+      selectedTime: formData.selectedTime,
       date: selectedDate
     };
     
@@ -53,6 +61,15 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAv
       [field]: value
     }));
   };
+
+  if (!customer) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <p>Error: No se encontraron datos del usuario</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -67,6 +84,20 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAv
             day: 'numeric'
           })}
         </Badge>
+      </div>
+
+      {/* User Information Display */}
+      <div className="bg-green-50 p-4 rounded-lg">
+        <h3 className="font-semibold text-green-900 mb-2 flex items-center space-x-1">
+          <User className="h-4 w-4" />
+          <span>Datos del paciente:</span>
+        </h3>
+        <div className="grid grid-cols-1 gap-2 text-sm text-green-700">
+          <p><strong>Nombre:</strong> {customer.firstName} {customer.lastName}</p>
+          <p><strong>Email:</strong> {customer.email}</p>
+          <p><strong>Teléfono:</strong> {customer.phone}</p>
+          <p><strong>Cédula:</strong> {customer.cedula}</p>
+        </div>
       </div>
 
       {/* Time Selection */}
@@ -95,68 +126,13 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAv
         </div>
       </div>
 
-      {/* Patient Information Form */}
+      {/* Appointment Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="firstName" className="flex items-center space-x-1">
-              <User className="h-4 w-4" />
-              <span>Nombre</span>
-            </Label>
-            <Input
-              id="firstName"
-              type="text"
-              required
-              value={formData.firstName}
-              onChange={(e) => handleInputChange("firstName", e.target.value)}
-              placeholder="Tu nombre"
-            />
-          </div>
-          <div>
-            <Label htmlFor="lastName">Apellido</Label>
-            <Input
-              id="lastName"
-              type="text"
-              required
-              value={formData.lastName}
-              onChange={(e) => handleInputChange("lastName", e.target.value)}
-              placeholder="Tu apellido"
-            />
-          </div>
-        </div>
-
         <div>
-          <Label htmlFor="email" className="flex items-center space-x-1">
-            <Mail className="h-4 w-4" />
-            <span>Correo electrónico</span>
+          <Label htmlFor="reason" className="flex items-center space-x-1">
+            <MessageSquare className="h-4 w-4" />
+            <span>Motivo de la consulta</span>
           </Label>
-          <Input
-            id="email"
-            type="email"
-            required
-            value={formData.email}
-            onChange={(e) => handleInputChange("email", e.target.value)}
-            placeholder="tu@email.com"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="phone" className="flex items-center space-x-1">
-            <Phone className="h-4 w-4" />
-            <span>Teléfono</span>
-          </Label>
-          <Input
-            id="phone"
-            type="tel"
-            required
-            value={formData.phone}
-            onChange={(e) => handleInputChange("phone", e.target.value)}
-            placeholder="+57 300 123 4567"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="reason">Motivo de la consulta</Label>
           <Input
             id="reason"
             type="text"

@@ -19,7 +19,7 @@ export const AppointmentSection = () => {
   const handleDateSelect = (date: Date | undefined) => {
     if (!isAuthenticated) {
       toast({
-        title: "Inicia sesión requerido",
+        title: "Inicio de sesión requerido",
         description: "Debes iniciar sesión para agendar una cita",
         variant: "destructive",
       });
@@ -33,7 +33,14 @@ export const AppointmentSection = () => {
   };
 
   const handleAppointmentSubmit = (appointmentData: AppointmentFormData) => {
-    if (!customer) return;
+    if (!customer) {
+      toast({
+        title: "Error",
+        description: "No se encontraron datos del usuario",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Verificar disponibilidad del horario
     const dateString = appointmentData.date.toISOString().split('T')[0];
@@ -46,19 +53,8 @@ export const AppointmentSection = () => {
       return;
     }
 
-    // Usar los datos del cliente autenticado
-    const appointmentWithCustomerData: AppointmentFormData = {
-      firstName: customer.firstName,
-      lastName: customer.lastName,
-      email: customer.email,
-      phone: customer.phone,
-      reason: appointmentData.reason,
-      selectedTime: appointmentData.selectedTime,
-      date: appointmentData.date
-    };
-
-    // Intentar crear la cita
-    const success = addAppointment(appointmentWithCustomerData);
+    // Los datos ya vienen correctos del formulario
+    const success = addAppointment(appointmentData);
     
     if (success) {
       toast({
