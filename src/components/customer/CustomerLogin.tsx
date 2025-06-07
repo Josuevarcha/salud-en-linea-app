@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, UserPlus } from "lucide-react";
 import { useCustomers } from "@/hooks/useCustomers";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface CustomerLoginProps {

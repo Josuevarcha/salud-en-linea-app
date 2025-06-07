@@ -1,5 +1,5 @@
 
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { Header } from "@/components/layout/Header";
 import { HeroSection } from "@/components/layout/HeroSection";
 import { FeaturesSection } from "@/components/layout/FeaturesSection";

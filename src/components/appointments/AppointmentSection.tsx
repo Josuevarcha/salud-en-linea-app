@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AppointmentCalendar } from "./AppointmentCalendar";
 import { AppointmentForm } from "./AppointmentForm";
 import { useAppointments, AppointmentFormData } from "@/hooks/useAppointments";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 
 export const AppointmentSection = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();

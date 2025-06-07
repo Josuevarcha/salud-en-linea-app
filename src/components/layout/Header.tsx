@@ -1,7 +1,7 @@
 
 import { Calendar, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 
 export const Header = () => {
   const { isAuthenticated, customer, logout } = useCustomerAuth();
