@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string | null
+          date: string
+          email: string
+          id: string
+          patient_name: string
+          phone: string
+          reason: string | null
+          status: string | null
+          time: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          email: string
+          id?: string
+          patient_name: string
+          phone: string
+          reason?: string | null
+          status?: string | null
+          time: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          email?: string
+          id?: string
+          patient_name?: string
+          phone?: string
+          reason?: string | null
+          status?: string | null
+          time?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           cedula: string | null
@@ -39,6 +81,39 @@ export type Database = {
           last_name?: string | null
           password?: string
           phone?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          cedula: string | null
+          created_at: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cedula?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          phone?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cedula?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          role?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }

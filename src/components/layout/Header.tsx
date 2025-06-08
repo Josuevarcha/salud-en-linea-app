@@ -1,12 +1,10 @@
 
 import { Calendar, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Header = () => {
-  const { isAuthenticated, customer, logout } = useCustomerAuth();
-
-  console.log('Header - Estado de autenticación:', { isAuthenticated, customer });
+  const { user, profile, signOut } = useAuth();
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -19,12 +17,13 @@ export const Header = () => {
             <h1 className="text-2xl font-bold text-gray-900">Salud en Línea</h1>
           </div>
           <div className="flex items-center space-x-4">
-            {isAuthenticated && customer ? (
+            {user && profile ? (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">
-                  Bienvenido, {customer.firstName}
+                  Bienvenido, {profile.first_name} {profile.last_name}
+                  {profile.role === 'admin' && <span className="text-blue-600 font-medium"> (Admin)</span>}
                 </span>
-                <Button variant="outline" size="sm" onClick={logout}>
+                <Button variant="outline" size="sm" onClick={signOut}>
                   <LogOut className="h-4 w-4 mr-1" />
                   Salir
                 </Button>
@@ -32,9 +31,11 @@ export const Header = () => {
             ) : (
               <span className="text-sm text-gray-500">No autenticado</span>
             )}
-            <Button variant="outline" onClick={() => window.location.href = "/admin"}>
-              Portal Administrativo
-            </Button>
+            {profile?.role === 'admin' && (
+              <Button variant="outline" onClick={() => window.location.href = "/admin"}>
+                Panel Administrativo
+              </Button>
+            )}
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 
-import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const HeroSection = () => {
-  const { isAuthenticated, customer } = useCustomerAuth();
+  const { user, profile } = useAuth();
 
   return (
     <section className="py-12 px-4 sm:px-6 lg:px-8">
@@ -11,8 +11,8 @@ export const HeroSection = () => {
           Agenda tu Cita Médica en Línea
         </h2>
         <p className="text-xl text-gray-600 mb-8">
-          {isAuthenticated 
-            ? `Bienvenido ${customer?.firstName}, selecciona una fecha para agendar tu cita`
+          {user && profile
+            ? `Bienvenido ${profile.first_name}, selecciona una fecha para agendar tu cita`
             : "Inicia sesión o regístrate para comenzar a agendar tus citas médicas"
           }
         </p>
