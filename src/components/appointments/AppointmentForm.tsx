@@ -5,18 +5,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Clock, User, MessageSquare } from "lucide-react";
-import { AppointmentFormData } from "@/hooks/useAppointments";
-import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
+import { AppointmentFormData } from "@/hooks/useSupabaseAppointments";
+
+interface Profile {
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  cedula: string | null;
+}
 
 interface AppointmentFormProps {
   selectedDate: Date;
   onSubmit: (data: AppointmentFormData) => void;
   onCancel: () => void;
   isTimeSlotAvailable: (date: string, time: string) => boolean;
+  profile?: Profile;
 }
 
-export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAvailable }: AppointmentFormProps) => {
-  const { customer } = useCustomerAuth();
+export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAvailable, profile }: AppointmentFormProps) => {
   const [formData, setFormData] = useState({
     reason: "",
     selectedTime: ""
@@ -37,16 +43,16 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAv
       return;
     }
     
-    if (!customer) {
+    if (!profile) {
       alert("Error: No se encontraron datos del usuario");
       return;
     }
     
     const appointmentData: AppointmentFormData = {
-      firstName: customer.firstName,
-      lastName: customer.lastName,
-      email: customer.email,
-      phone: customer.phone,
+      firstName: profile.first_name || '',
+      lastName: profile.last_name || '',
+      email: '', // Will be filled from user session
+      phone: profile.phone || '',
       reason: formData.reason,
       selectedTime: formData.selectedTime,
       date: selectedDate
@@ -62,7 +68,7 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAv
     }));
   };
 
-  if (!customer) {
+  if (!profile) {
     return (
       <div className="text-center py-8 text-gray-500">
         <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -93,10 +99,9 @@ export const AppointmentForm = ({ selectedDate, onSubmit, onCancel, isTimeSlotAv
           <span>Datos del paciente:</span>
         </h3>
         <div className="grid grid-cols-1 gap-2 text-sm text-green-700">
-          <p><strong>Nombre:</strong> {customer.firstName} {customer.lastName}</p>
-          <p><strong>Email:</strong> {customer.email}</p>
-          <p><strong>Teléfono:</strong> {customer.phone}</p>
-          <p><strong>Cédula:</strong> {customer.cedula}</p>
+          <p><strong>Nombre:</strong> {profile.first_name} {profile.last_name}</p>
+          <p><strong>Teléfono:</strong> {profile.phone}</p>
+          <p><strong>Cédula:</strong> {profile.cedula}</p>
         </div>
       </div>
 

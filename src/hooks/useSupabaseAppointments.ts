@@ -43,7 +43,13 @@ export const useSupabaseAppointments = () => {
         return;
       }
 
-      setAppointments(data || []);
+      // Convertir los datos para que coincidan con nuestros tipos
+      const typedAppointments: Appointment[] = (data || []).map(apt => ({
+        ...apt,
+        status: apt.status as 'pending' | 'confirmed' | 'cancelled'
+      }));
+
+      setAppointments(typedAppointments);
     } catch (error) {
       console.error('Error in fetchAppointments:', error);
     } finally {
