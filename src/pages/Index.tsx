@@ -9,19 +9,19 @@ import { UpdatedAppointmentSection } from "@/components/appointments/UpdatedAppo
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const { user, profile, loading } = useAuth();
+  const { usuario, perfil, cargando } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect based on user role
+  // Redirigir basado en el rol del usuario
   useEffect(() => {
-    if (!loading && user && profile) {
-      if (profile.role === 'admin') {
+    if (!cargando && usuario && perfil) {
+      if (perfil.role === 'admin') {
         navigate('/admin');
       }
     }
-  }, [user, profile, loading, navigate]);
+  }, [usuario, perfil, cargando, navigate]);
 
-  if (loading) {
+  if (cargando) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
         <div className="text-gray-500">Cargando...</div>
@@ -29,8 +29,8 @@ const Index = () => {
     );
   }
 
-  // Show admin redirect message if admin tries to access main page
-  if (user && profile?.role === 'admin') {
+  // Mostrar mensaje de redirección si el admin intenta acceder a la página principal
+  if (usuario && perfil?.role === 'admin') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
         <div className="text-center">
@@ -50,7 +50,7 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        {!user ? (
+        {!usuario ? (
           <>
             <div className="text-center mb-8">
               <Button 

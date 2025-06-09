@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-interface Profile {
+interface Perfil {
   id: string;
   first_name: string | null;
   last_name: string | null;
@@ -14,134 +14,178 @@ interface Profile {
   updated_at: string;
 }
 
-interface AuthState {
-  user: User | null;
-  session: Session | null;
-  profile: Profile | null;
-  loading: boolean;
+interface EstadoAuth {
+  usuario: User | null;
+  sesion: Session | null;
+  perfil: Perfil | null;
+  cargando: boolean;
 }
 
-interface AuthContextType extends AuthState {
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, userData: { firstName: string; lastName: string; phone: string; cedula: string }) => Promise<{ error: any }>;
-  signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
+interface TipoContextoAuth extends EstadoAuth {
+  iniciarSesion: (email: string, password: string) => Promise<{ error: any }>;
+  registrarse: (email: string, password: string, datosUsuario: { firstName: string; lastName: string; phone: string; cedula: string }) => Promise<{ error: any }>;
+  cerrarSesion: () => Promise<void>;
+  actualizarPerfil: (actualizaciones: Partial<Perfil>) => Promise<{ error: any }>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const ContextoAuth = createContext<TipoContextoAuth | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    session: null,
-    profile: null,
-    loading: true
+// Función para limpiar el estado de autenticación
+const limpiarEstadoAuth = () => {
+  Object.keys(localStorage).forEach((clave) => {
+    if (clave.startsWith('supabase.auth.') || clave.includes('sb-')) {
+      localStorage.removeItem(clave);
+    }
+  });
+  Object.keys(sessionStorage || {}).forEach((clave) => {
+    if (clave.startsWith('supabase.auth.') || clave.includes('sb-')) {
+      sessionStorage.removeItem(clave);
+    }
+  });
+};
+
+export const ProveedorAuth = ({ children }: { children: ReactNode }) => {
+  const [estadoAuth, setEstadoAuth] = useState<EstadoAuth>({
+    usuario: null,
+    sesion: null,
+    perfil: null,
+    cargando: true
   });
 
-  const fetchProfile = async (userId: string) => {
+  const obtenerPerfil = async (idUsuario: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', idUsuario)
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        console.error('Error al obtener perfil:', error);
         return null;
       }
       return data;
     } catch (error) {
-      console.error('Error in fetchProfile:', error);
+      console.error('Error en obtenerPerfil:', error);
       return null;
     }
   };
 
   useEffect(() => {
-    // Setup auth state listener
+    console.log('Configurando listener de auth...');
+    
+    // Configurar listener de estado de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id);
+      async (evento, sesion) => {
+        console.log('Cambio de estado de auth:', evento, sesion?.user?.id);
         
-        if (session?.user) {
-          // Defer profile fetching to avoid deadlocks
+        if (sesion?.user) {
+          // Usar setTimeout para evitar deadlocks
           setTimeout(async () => {
-            const profile = await fetchProfile(session.user.id);
-            setAuthState({
-              user: session.user,
-              session,
-              profile,
-              loading: false
+            const perfil = await obtenerPerfil(sesion.user.id);
+            setEstadoAuth({
+              usuario: sesion.user,
+              sesion,
+              perfil,
+              cargando: false
             });
           }, 0);
         } else {
-          setAuthState({
-            user: null,
-            session: null,
-            profile: null,
-            loading: false
+          setEstadoAuth({
+            usuario: null,
+            sesion: null,
+            perfil: null,
+            cargando: false
           });
         }
       }
     );
 
-    // Check for existing session
+    // Verificar sesión existente
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        fetchProfile(session.user.id).then(profile => {
-          setAuthState({
-            user: session.user,
-            session,
-            profile,
-            loading: false
+        obtenerPerfil(session.user.id).then(perfil => {
+          setEstadoAuth({
+            usuario: session.user,
+            sesion: session,
+            perfil,
+            cargando: false
           });
         });
       } else {
-        setAuthState(prev => ({ ...prev, loading: false }));
+        setEstadoAuth(prev => ({ ...prev, cargando: false }));
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const iniciarSesion = async (email: string, password: string) => {
     try {
+      // Limpiar estado antes de iniciar sesión
+      limpiarEstadoAuth();
+      
+      // Intentar cerrar sesión global primero
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continuar aunque falle
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-      return { error };
+
+      if (error) {
+        return { error };
+      }
+
+      // Si el login es exitoso, forzar recarga de página
+      if (data.user) {
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 100);
+      }
+
+      return { error: null };
     } catch (error) {
       return { error };
     }
   };
 
-  const signUp = async (email: string, password: string, userData: { firstName: string; lastName: string; phone: string; cedula: string }) => {
+  const registrarse = async (email: string, password: string, datosUsuario: { firstName: string; lastName: string; phone: string; cedula: string }) => {
     try {
+      // Limpiar estado antes de registrarse
+      limpiarEstadoAuth();
+
+      const urlRedireccion = `${window.location.origin}/`;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: urlRedireccion,
           data: {
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            phone: userData.phone,
-            cedula: userData.cedula
+            first_name: datosUsuario.firstName,
+            last_name: datosUsuario.lastName,
+            phone: datosUsuario.phone,
+            cedula: datosUsuario.cedula
           }
         }
       });
 
       if (error) return { error };
 
-      // Update profile with additional data
+      // Actualizar perfil con datos adicionales
       if (data.user) {
         await supabase
           .from('profiles')
           .update({
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            phone: userData.phone,
-            cedula: userData.cedula
+            first_name: datosUsuario.firstName,
+            last_name: datosUsuario.lastName,
+            phone: datosUsuario.phone,
+            cedula: datosUsuario.cedula
           })
           .eq('id', data.user.id);
       }
@@ -152,23 +196,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const cerrarSesion = async () => {
+    try {
+      // Limpiar estado primero
+      limpiarEstadoAuth();
+      
+      // Intentar cerrar sesión global
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Ignorar errores
+      }
+      
+      // Forzar recarga de página
+      window.location.href = '/auth';
+    } catch (error) {
+      // En caso de error, forzar recarga de página
+      window.location.href = '/auth';
+    }
   };
 
-  const updateProfile = async (updates: Partial<Profile>) => {
-    if (!authState.user) return { error: 'No user logged in' };
+  const actualizarPerfil = async (actualizaciones: Partial<Perfil>) => {
+    if (!estadoAuth.usuario) return { error: 'No hay usuario logueado' };
 
     try {
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
-        .eq('id', authState.user.id);
+        .update(actualizaciones)
+        .eq('id', estadoAuth.usuario.id);
 
-      if (!error && authState.profile) {
-        setAuthState(prev => ({
+      if (!error && estadoAuth.perfil) {
+        setEstadoAuth(prev => ({
           ...prev,
-          profile: { ...prev.profile!, ...updates }
+          perfil: { ...prev.perfil!, ...actualizaciones }
         }));
       }
 
@@ -179,22 +239,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{
-      ...authState,
-      signIn,
-      signUp,
-      signOut,
-      updateProfile
+    <ContextoAuth.Provider value={{
+      ...estadoAuth,
+      iniciarSesion,
+      registrarse,
+      cerrarSesion,
+      actualizarPerfil
     }}>
       {children}
-    </AuthContext.Provider>
+    </ContextoAuth.Provider>
   );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  const contexto = useContext(ContextoAuth);
+  if (contexto === undefined) {
+    throw new Error('useAuth debe usarse dentro de un ProveedorAuth');
   }
-  return context;
+  return contexto;
 };

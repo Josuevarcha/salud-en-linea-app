@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const Header = () => {
-  const { user, profile, signOut } = useAuth();
+  const { usuario, perfil, cerrarSesion } = useAuth();
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -17,13 +17,13 @@ export const Header = () => {
             <h1 className="text-2xl font-bold text-gray-900">Salud en Línea</h1>
           </div>
           <div className="flex items-center space-x-4">
-            {user && profile ? (
+            {usuario && perfil ? (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">
-                  Bienvenido, {profile.first_name} {profile.last_name}
-                  {profile.role === 'admin' && <span className="text-blue-600 font-medium"> (Admin)</span>}
+                  Bienvenido, {perfil.first_name} {perfil.last_name}
+                  {perfil.role === 'admin' && <span className="text-blue-600 font-medium"> (Admin)</span>}
                 </span>
-                <Button variant="outline" size="sm" onClick={signOut}>
+                <Button variant="outline" size="sm" onClick={cerrarSesion}>
                   <LogOut className="h-4 w-4 mr-1" />
                   Salir
                 </Button>
@@ -31,7 +31,7 @@ export const Header = () => {
             ) : (
               <span className="text-sm text-gray-500">No autenticado</span>
             )}
-            {profile?.role === 'admin' && (
+            {perfil?.role === 'admin' && (
               <Button variant="outline" onClick={() => window.location.href = "/admin"}>
                 Panel Administrativo
               </Button>
