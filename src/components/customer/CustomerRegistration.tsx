@@ -1,21 +1,23 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Mail, Phone, Lock, CreditCard } from "lucide-react";
-import { useCustomers, CustomerRegistrationData } from "@/hooks/useCustomers";
-import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { createClient } from "@supabase/supabase-js";
 
 interface CustomerRegistrationProps {
   onSuccess: () => void;
   onCancel: () => void;
 }
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrationProps) => {
-  const [formData, setFormData] = useState<CustomerRegistrationData>({
+  const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -24,14 +26,12 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
     password: ""
   });
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const { registerCustomer } = useCustomers();
-  const { login } = useCustomerAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.password !== confirmPassword) {
       toast({
         title: "Error",
@@ -50,39 +50,41 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
       return;
     }
 
-    const result = registerCustomer(formData);
-    
-    if (result.success) {
-      // Crear objeto cliente para autenticación
-      const newCustomer = {
-        id: Date.now(),
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        cedula: formData.cedula,
-        phone: formData.phone,
-        password: formData.password,
-        createdAt: new Date().toISOString()
-      };
+    setIsLoading(true);
 
-      // Iniciar sesión automáticamente después del registro
-      login(newCustomer);
-      
-      toast({
-        title: "¡Registro exitoso!",
-        description: "Tu cuenta ha sido creada y has iniciado sesión automáticamente",
-      });
-      onSuccess();
-    } else {
+    // Registro en Supabase
+    const { error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        data: {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone: formData.phone,
+          cedula: formData.cedula,
+        },
+      },
+    });
+
+    setIsLoading(false);
+
+    if (error) {
       toast({
         title: "Error en el registro",
-        description: result.message,
+        description: error.message || "No se pudo crear la cuenta.",
         variant: "destructive",
       });
+      return;
     }
+
+    toast({
+      title: "¡Registro exitoso!",
+      description: "Tu cuenta ha sido creada. Por favor revisa tu correo para confirmar y luego inicia sesión.",
+    });
+    onSuccess();
   };
 
-  const handleInputChange = (field: keyof CustomerRegistrationData, value: string) => {
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -110,6 +112,7 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
                 value={formData.firstName}
                 onChange={(e) => handleInputChange("firstName", e.target.value)}
                 placeholder="Tu nombre"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -121,6 +124,7 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
                 value={formData.lastName}
                 onChange={(e) => handleInputChange("lastName", e.target.value)}
                 placeholder="Tu apellido"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -137,6 +141,7 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="tu@email.com"
+              disabled={isLoading}
             />
           </div>
 
@@ -152,6 +157,7 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
               value={formData.cedula}
               onChange={(e) => handleInputChange("cedula", e.target.value)}
               placeholder="12345678"
+              disabled={isLoading}
             />
           </div>
 
@@ -167,6 +173,7 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
               value={formData.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
               placeholder="+57 300 123 4567"
+              disabled={isLoading}
             />
           </div>
 
@@ -182,6 +189,7 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
               value={formData.password}
               onChange={(e) => handleInputChange("password", e.target.value)}
               placeholder="Mínimo 6 caracteres"
+              disabled={isLoading}
             />
           </div>
 
@@ -194,14 +202,15 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Repite tu contraseña"
+              disabled={isLoading}
             />
           </div>
 
           <div className="flex space-x-3 pt-4">
-            <Button type="submit" className="flex-1">
-              Registrarse
+            <Button type="submit" className="flex-1" disabled={isLoading}>
+              {isLoading ? "Registrando..." : "Registrarse"}
             </Button>
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
               Cancelar
             </Button>
           </div>
