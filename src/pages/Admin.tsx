@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Calendar, Users, Clock, Search, ArrowLeft, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,8 @@ const Admin = () => {
   const { appointments, updateAppointment, deleteAppointment } = useAppointments();
   const { customers, reloadCustomers } = useCustomers();
 
-  const handleLogin = (credentials: { username: string; password: string }) => {
+  // Cambiado: ahora espera email y password
+  const handleLogin = (credentials: { email: string; password: string }) => {
     const success = login(credentials);
     
     if (success) {
@@ -36,7 +36,7 @@ const Admin = () => {
     } else {
       toast({
         title: "Error de autenticación",
-        description: "Usuario o contraseña incorrectos",
+        description: "Correo o contraseña incorrectos",
         variant: "destructive",
       });
     }
@@ -77,6 +77,7 @@ const Admin = () => {
   };
 
   if (!isAuthenticated) {
+    // AdminLogin ahora espera email y password
     return <AdminLogin onLogin={handleLogin} />;
   }
 
