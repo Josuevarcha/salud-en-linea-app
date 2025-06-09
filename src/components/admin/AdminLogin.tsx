@@ -1,18 +1,17 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, User, ArrowLeft } from "lucide-react";
+import { Lock, User, ArrowLeft, Mail } from "lucide-react";
 
 interface AdminLoginProps {
-  onLogin: (credentials: { username: string; password: string }) => void;
+  onLogin: (credentials: { email: string; password: string }) => void;
 }
 
 export const AdminLogin = ({ onLogin }: AdminLoginProps) => {
   const [credentials, setCredentials] = useState({
-    username: "",
+    email: "",
     password: ""
   });
 
@@ -42,23 +41,22 @@ export const AdminLogin = ({ onLogin }: AdminLoginProps) => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="username" className="flex items-center space-x-1">
-                  <User className="h-4 w-4" />
-                  <span>Usuario</span>
+                <Label htmlFor="email" className="flex items-center space-x-1">
+                  <Mail className="h-4 w-4" />
+                  <span>Correo electrónico</span>
                 </Label>
                 <Input
-                  id="username"
-                  type="text"
+                  id="email"
+                  type="email"
                   required
-                  value={credentials.username}
+                  value={credentials.email}
                   onChange={(e) => setCredentials(prev => ({
                     ...prev,
-                    username: e.target.value
+                    email: e.target.value
                   }))}
-                  placeholder="Ingresa tu usuario"
+                  placeholder="Ingresa tu correo"
                 />
               </div>
-
               <div>
                 <Label htmlFor="password" className="flex items-center space-x-1">
                   <Lock className="h-4 w-4" />
@@ -85,7 +83,7 @@ export const AdminLogin = ({ onLogin }: AdminLoginProps) => {
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800">
                 <strong>Credenciales de prueba:</strong><br />
-                Usuario: admin<br />
+                Correo: admin@ejemplo.com<br />
                 Contraseña: admin123
               </p>
             </div>
