@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Mail, Phone, Lock, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 
 interface CustomerRegistrationProps {
@@ -28,6 +29,7 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,9 +81,12 @@ export const CustomerRegistration = ({ onSuccess, onCancel }: CustomerRegistrati
 
     toast({
       title: "¡Registro exitoso!",
-      description: "Tu cuenta ha sido creada. Por favor revisa tu correo para confirmar y luego inicia sesión.",
+      description: "Tu cuenta ha sido creada. Por favor revisa tu correo y luego inicia sesión.",
     });
-    onSuccess();
+    onSuccess?.(); // Si tu lógica necesita esto, si no puedes eliminarlo
+
+    // Redirige automáticamente a la página de login
+    navigate("/login");
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
